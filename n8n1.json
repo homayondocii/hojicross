@@ -1,5 +1,5 @@
 {
-  "name": "Crypto & Forex News Collector",
+  "name": "CryptoPanic News Collector",
   "nodes": [
     {
       "parameters": {
@@ -12,8 +12,10 @@
           ]
         }
       },
+      "id": "df1fd6a0-2c3a-4d89-a647-a22ef22467b1",
       "name": "Schedule Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
       "position": [
         250,
         300
@@ -21,27 +23,17 @@
     },
     {
       "parameters": {
-        "url": "https://cryptopanic.com/api/v1/posts/?auth_token=bba51c5d0fdb67a9cd8bda5821b9beeae4e290d8&filter=important",
+        "url": "https://cryptopanic.com/api/v1/posts/?auth_token=bba51c5d0fdb67a9cd8bda5821b9beeae4e290d8&filter=important&kind=news",
+        "method": "GET",
+        "authentication": "none",
         "options": {
-          "timeout": 5000
+          "timeout": 10000
         }
       },
+      "id": "a8b4c6d0-1e2f-4g5h-6i7j-8k9l0m1n2o3p",
       "name": "CryptoPanic API",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [
-        450,
-        200
-      ]
-    },
-    {
-      "parameters": {
-        "url": "https://newsapi.org/v2/everything?q=crypto&apiKey=29863893abde45e9b083d5a6ffb65bec",
-        "options": {
-          "timeout": 5000
-        }
-      },
-      "name": "NewsAPI",
-      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
       "position": [
         450,
         300
@@ -49,17 +41,115 @@
     },
     {
       "parameters": {
-        "url": "https://www.forexlive.com/feed/",
+        "jsCode": "const results = items[0].json.results;\n\nreturn results.map(item => ({\n  json: {\n    title: item.title,\n    url: item.url,\n    source: `CryptoPanic - ${item.source.domain}`,\n    published_at: new Date(item.published_at).toISOString().slice(0, 19).replace('T', ' '),\n    summary: item.metadata ? item.metadata.description : item.title\n  }\n}));"
+      },
+      "id": "c7d8e9f0-3g4h-5i6j-7k8l-9m0n1o2p3q4r",
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "crypto_news",
+        "columns": "title,url,source,published_at,summary",
         "options": {
-          "timeout": 5000
+          "ignoreDuplicates": true
+        },
+        "credentials": {
+          "host": "mariadb",
+          "database": "news_db",
+          "user": "news_user",
+          "password": "StrongPassword123!"
         }
       },
-      "name": "ForexLive RSS",
-      "type": "n8n-nodes-base.httpRequest",
+      "id": "e5f6g7h0-4i5j-6k7l-8m9n-0o1p2q3r4s5t",
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
       "position": [
-        450,
-        400
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM crypto_news WHERE published_at < DATE_SUB(NOW(), INTERVAL 7 DAY);",
+        "credentials": {
+          "host": "mariadb",
+          "database": "news_db",
+          "user": "news_user",
+          "password": "StrongPassword123!"
+        }
+      },
+      "id": "i7j8k9l0-5m6n-7o8p-9q0r-1s2t3u4v5w6x",
+      "name": "Cleanup Old News",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
       ]
     }
-  ]
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "CryptoPanic API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CryptoPanic API": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Database": {
+      "main": [
+        [
+          {
+            "node": "Cleanup Old News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": ["crypto", "news"],
+  "updatedAt": "2025-06-08 09:01:48"
 }
