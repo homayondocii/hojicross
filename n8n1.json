@@ -1,0 +1,65 @@
+{
+  "name": "Crypto & Forex News Collector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "step": 6
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://cryptopanic.com/api/v1/posts/?auth_token=bba51c5d0fdb67a9cd8bda5821b9beeae4e290d8&filter=important",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "CryptoPanic API",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything?q=crypto&apiKey=29863893abde45e9b083d5a6ffb65bec",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "NewsAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.forexlive.com/feed/",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "name": "ForexLive RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        450,
+        400
+      ]
+    }
+  ]
+}
